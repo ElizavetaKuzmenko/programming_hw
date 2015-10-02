@@ -2,11 +2,14 @@ __author__ = 'lizaku55'
 
 import urllib.request as urlr
 import re, bz2
+from lxml import etree
+hparser = etree.HTMLParser(encoding='utf-8')
 
 codes = [line.strip() for line in open('codes.txt', encoding='utf8')]
 re_title = re.compile('<title>([^<]*)</title>')
 re_size = re.compile('Content-Length:.*')
-
+re_text = re.compile('<text[^>]*>([^<]*)</text>', flags=re.DOTALL)
+re_links = re.compile('\[\[[^\]]*\]\]')
 #wiki_url = 'https://dumps.wikimedia.org/backup-index.html'
 #page = urlr.urlopen(wiki_url)
 #text = page.read().decode('utf-8')
@@ -46,3 +49,25 @@ def find_articles():
     for art in sorted(articles):
         articles_list.write(art + '\n')
     articles_list.close()
+
+def read_articles():
+    query = input('What language are you looking for? ')
+    wiki_table = open('%s_wiki_table.csv' % query, 'w')
+    if query in codes:
+        dump = bz2.BZ2File('%swiki-latest-pages-articles.xml.bz2' % query, 'r')
+        #dump = open('%swiki-latest-pages-articles.xml' % query, 'r', encoding='utf-8')
+        article = ''
+        for line in dump:
+            line = str(line, encoding='utf-8')
+            article += line
+            if '</page>' in line:
+                title = re_title.findall(article)[0].replace('&quot;', '"')
+                if ':' not in title:
+                    text = re.sub('\{[\}]*', '', re_text.findall(article)[0])
+                    links = re_links.findall(text)
+                    wiki_table.write(title + '\t' + str(len(links)) + '\t' + str(len(text.split())) + '\n')
+                article = ''
+    wiki_table.close()
+
+if __name__ == '__main__':
+    read_articles()
