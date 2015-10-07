@@ -1,7 +1,9 @@
 __author__ = 'lizaku55'
 
 import urllib.request as urlr
-import re, bz2
+import re
+import bz2
+import json
 from lxml import etree
 hparser = etree.HTMLParser(encoding='utf-8')
 
@@ -10,12 +12,20 @@ re_title = re.compile('<title>([^<]*)</title>')
 re_size = re.compile('Content-Length:.*')
 re_text = re.compile('<text[^>]*>([^<]*)</text>', flags=re.DOTALL)
 re_links = re.compile('\[\[[^\]]*\]\]')
-#wiki_url = 'https://dumps.wikimedia.org/backup-index.html'
-#page = urlr.urlopen(wiki_url)
-#text = page.read().decode('utf-8')
+re_clean1 = re.compile('\{\{[^\}]*\}\}*')
+re_clean2 = re.compile('==[^=]*==')
+re_clean3 = re.compile('\{\|[^\}]*\|\}')
+re_clean4 = re.compile('&lt;[^&]*&gt;')
+re_clean5 = re.compile("\[\[[^\|=\]]*?[\|=][^\]]*?\]\]", flags=re.DOTALL)
+stop_symb = re.compile('[_\*\+$=&–}\]\[\.\?!:;"\(\),\{0-9]*')
+# wiki_url = 'https://dumps.wikimedia.org/backup-index.html'
+# page = urlr.urlopen(wiki_url)
+# text = page.read().decode('utf-8')
 
-#links = [re.findall('<a[^>]*>(.*)</a>', x, flags=re.DOTALL) for x in re.findall('<li>(.*?)</li>', text, flags=re.DOTALL)]
-#codes = [x[0][:-4] for x in links if (x != [] and x[0].endswith('wiki'))]
+# links = [re.findall('<a[^>]*>(.*)</a>', x, flags=re.DOTALL) for x in re.findall('<li>(.*?)</li>',
+# text, flags=re.DOTALL)]
+# codes = [x[0][:-4] for x in links if (x != [] and x[0].endswith('wiki'))]
+
 
 def load_dump():
     query = input('What language are you looking for? ')
@@ -24,7 +34,7 @@ def load_dump():
         dump = urlr.urlopen(dump_url)
         size = int(re_size.findall(dump.info().as_string())[0].split()[-1])
         if size > 50000000:
-            answer = input('The download size is %s MB. Are you sure you want to download it (yes/no)? ' % str(size/1000000))
+            answer = input('The download size is %s MB. Do you want to download it (yes/no)? ' % str(size/1000000))
             if answer == 'yes':
                 urlr.urlretrieve(dump_url, dump_url.split('/')[-1])
                 print('Dump is downloaded!')
@@ -34,13 +44,14 @@ def load_dump():
     else:
         print('Your language code is not valid.')
 
+
 def find_articles():
     articles = []
     articles_list = open('article_names.txt', 'w', encoding='utf-8')
     query = input('What language are you looking for? ')
     if query in codes:
         dump = bz2.BZ2File('%swiki-latest-pages-articles.xml.bz2' % query, 'r')
-        #dump = open('%swiki-latest-pages-articles.xml' % query, 'r', encoding='utf-8')
+        # dump = open('%swiki-latest-pages-articles.xml' % query, 'r', encoding='utf-8')
         for line in dump:
             line = str(line, encoding='utf-8')
             if '<title>' in line and ':' not in line:
@@ -50,12 +61,16 @@ def find_articles():
         articles_list.write(art + '\n')
     articles_list.close()
 
+
 def read_articles():
     query = input('What language are you looking for? ')
-    wiki_table = open('%s_wiki_table.csv' % query, 'w')
     if query in codes:
+        freq_dic = {}
+        d = open('freq_dic.json', 'a')
+        wiki_table = open('%s_wiki_table.csv' % query, 'w')
+        wiki_table.write('Название статьи\tСколько в ней ссылок\tКоличество слов\n')
         dump = bz2.BZ2File('%swiki-latest-pages-articles.xml.bz2' % query, 'r')
-        #dump = open('%swiki-latest-pages-articles.xml' % query, 'r', encoding='utf-8')
+        # dump = open('%swiki-latest-pages-articles.xml' % query, 'r', encoding='utf-8')
         article = ''
         for line in dump:
             line = str(line, encoding='utf-8')
@@ -63,11 +78,43 @@ def read_articles():
             if '</page>' in line:
                 title = re_title.findall(article)[0].replace('&quot;', '"')
                 if ':' not in title:
-                    text = re.sub('\{[\}]*', '', re_text.findall(article)[0])
-                    links = re_links.findall(text)
-                    wiki_table.write(title + '\t' + str(len(links)) + '\t' + str(len(text.split())) + '\n')
+                    links = re_links.findall(article)
+                    text = re_clean1.sub('', re_text.findall(article)[0]).replace("''", '')
+                    text = re_clean2.sub('', text)
+                    text = re_clean3.sub('', text).replace('#REDIRECT', '').replace('#Redirect', '').replace("'''", '')
+                    text = re_clean4.sub('', text)
+                    text = re_clean5.sub('', text)
+                    text = stop_symb.sub('', text)
+                    words = [word for word in text.split() if not (word == '|-' or word == '-|' or word == '|' or
+                                                                   '#' in word or '|' in word or '-' in word or
+                                                                   word == ':' or word == '/' or word == '—')]
+                    for word in words:
+                        try:
+                            freq_dic[word] += 1
+                        except:
+                            freq_dic[word] = 1
+                        if len(freq_dic) == 10000:
+                            d.write(json.dumps(freq_dic, ensure_ascii=False) + '\n')
+                            freq_dic = {}
+                    wiki_table.write(title + '\t' + str(len(links)) + '\t' + str(len(words)) + '\n')
                 article = ''
-    wiki_table.close()
+        wiki_table.close()
+        d.close()
+        res_freq = {}
+        for line in open('freq_dic.json', 'r'):
+            line = json.loads(line.strip())
+            for word in line:
+                if word in res_freq:
+                    res_freq[word] += line[word]
+                else:
+                    res_freq[word] = line[word]
+        fr = open('frequency_list.csv', 'w', encoding='utf8')
+        for k in sorted(res_freq, key=lambda w: -res_freq[w]):
+            fr.write(k + '\t' + str(res_freq[k]) + '\n')
+        fr.close()
+
+    else:
+        print('Your language code is not valid.')
 
 if __name__ == '__main__':
     read_articles()
