@@ -4,6 +4,7 @@ import urllib.request as urlr
 import re
 import bz2
 import json
+import sqlite3
 from lxml import etree
 hparser = etree.HTMLParser(encoding='utf-8')
 
@@ -116,5 +117,51 @@ def read_articles():
     else:
         print('Your language code is not valid.')
 
+
+def read_articles_db():
+    query = input('What language are you looking for? ')
+    if query in codes:
+        base = sqlite3.connect('%s_frequency.db' % query)
+        c = base.cursor()
+        c.execute('''CREATE TABLE frequency_list (word, frequency)''')
+        # c.execute('''CREATE TABLE wikipedia (title, links, words)''')
+        dump = bz2.BZ2File('%swiki-latest-pages-articles.xml.bz2' % query, 'r')
+        # dump = open('%swiki-latest-pages-articles.xml' % query, 'r', encoding='utf-8')
+        article = ''
+        for line in dump:
+            line = str(line, encoding='utf-8')
+            article += line
+            if '</page>' in line:
+                title = re_title.findall(article)[0].replace('&quot;', '"')
+                if ':' not in title:
+                    links = re_links.findall(article)
+                    text = re_clean1.sub('', re_text.findall(article)[0]).replace("''", '')
+                    text = re_clean2.sub('', text)
+                    text = re_clean3.sub('', text).replace('#REDIRECT', '').replace('#Redirect', '').replace("'''", '')
+                    text = re_clean4.sub('', text)
+                    text = re_clean5.sub('', text)
+                    text = stop_symb.sub('', text)
+                    words = [word for word in text.split() if not (word == '|-' or word == '-|' or word == '|' or
+                                                                   '#' in word or '|' in word or '-' in word or
+                                                                   word == ':' or word == '/' or word == '—')]
+                    for word in words:
+                        word = word.lower()
+                        c.execute('SELECT frequency FROM frequency_list WHERE word=?', (word,))
+                        freq = c.fetchone()
+                        if freq is None:
+                            c.execute('INSERT INTO frequency_list VALUES (?,?)', (word, 1))
+                        else:
+                            c.execute('UPDATE frequency_list SET frequency = ? WHERE word = ?', (freq[0] + 1, word))
+                            # c.execute('SELECT * FROM frequency_list WHERE word=?', (word,))
+                            # print(c.fetchone())
+                    # data = (title, len(links), len(words))
+                    # print(data)
+                    # base.execute('INSERT INTO wikipedia VALUES (?,?,?)', data)
+                article = ''
+        base.commit()
+        base.close()
+    else:
+        print('Your language code is not valid.')
+
 if __name__ == '__main__':
-    read_articles()
+    read_articles_db()
