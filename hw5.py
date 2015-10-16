@@ -16,10 +16,10 @@ class TestFibonacci(unittest.TestCase):
 
 class TestDrink(unittest.TestCase):
     def test_re(self):
-        self.assertTrue(drink('выпью'))
-        self.assertFalse(drink('запивать'))
-        self.assertTrue(drink('выпитую'))
-        self.assertFalse(drink('пьяница'))
+        for line in open('drink.txt', 'r'):
+            word = line.strip('\n,')
+            print(word)
+            self.assertTrue(drink(word))
 
 def fib(n):
     if type(n) is not int:
@@ -32,7 +32,7 @@ def fib(n):
         return fib(n - 2) + fib(n - 1)
 
 def drink(string):
-    if re.search('^вып(ью|ьем|ьешь|ьет|ьют|ит|ив|ил)', string.lower()) is None:
+    if re.search('^вып(ью|ьем|ьешь|ьет|ьют|ит|ив|ил|ей)', string.lower()) is None:
         return False
     else:
         return True
