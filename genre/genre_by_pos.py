@@ -8,7 +8,6 @@ from matplotlib import mlab
 import re, time
 from pymystem3 import Mystem
 m = Mystem()
-trash = set(['«', ':', ';', ',', '"', '\'', '$', '(', ')', '%', '–', ' ', '\n'])
 
 def mystem(sentence):
     sentence = sentence.strip()
@@ -46,9 +45,9 @@ def pronouns(analysis):
         return 0
 
 print('Reading', time.asctime())
-with open('corpus1.txt', encoding='utf-8') as f:
+with open('anna.txt', encoding='utf-8') as f:
     corp1 = f.read()
-with open('corpus2.txt', encoding='utf-8') as f:
+with open('sonets.txt', encoding='utf-8') as f:
     corp2 = f.read()
 
 corp1_sentences = re.split(r'(?:[.]\s*){3}|[.?!]', corp1)
