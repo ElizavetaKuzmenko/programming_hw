@@ -4,6 +4,7 @@ __author__ = 'liza'
 import numpy as np
 import re
 from matplotlib import pyplot as plt
+from matplotlib import mlab
 
 sub_symb = re.compile('[\r\n«:;,"\'$()%–0-9]')
 vowels = 'уеыаоэяиюё'
@@ -35,8 +36,16 @@ corp2_data = [(len(sub_symb.sub('', sentence.replace(' ', ''))), len(set([letter
 
 corp1_data = np.array(corp1_data)
 corp2_data = np.array(corp2_data)
+#plt.figure()
+#c1, c2 = 0, 3
+#plt.plot(corp1_data[:, c1], corp1_data[:, c2], 'og',
+#         corp2_data[:, c1], corp2_data[:, c2], 'sb')
+#plt.show()
+
+data = np.vstack((corp1_data, corp2_data))
+p = mlab.PCA(data)
+print(p.Wt)
+N = len(corp1_data)
 plt.figure()
-c1, c2 = 0, 3
-plt.plot(corp1_data[:, c1], corp1_data[:, c2], 'og',
-         corp2_data[:, c1], corp2_data[:, c2], 'sb')
+plt.plot(p.Y[:N, 0], p.Y[:N, 1], 'ob', p.Y[N:, 0], p.Y[N:, 1], 'xr')
 plt.show()
