@@ -3,11 +3,17 @@ __author__ = 'liza'
 
 import re
 import numpy as np
+from math import fabs
 from matplotlib import pyplot as plt
 from matplotlib import mlab
 from pymystem3 import Mystem
 m = Mystem()
 sub_symb = re.compile('[\r\n«:;,"\'$()%–0-9]')
+features = {1: 'number of adjectives', 2: 'number of nouns', 3: 'number of verbs', 4: 'number of adverbs',
+            5: 'number of pronouns', 6: 'lenght of sentence in words', 7: 'mean lenght of word',
+            8: 'median length of word', 9: 'std of length of word', 10: 'length of word in symbols',
+            11: 'number of different symbols in sentence', 12: 'number of vowels in sentence',
+            13: 'median length of word', 14: 'median number of vowels in a word'}
 
 from genre_by_letters import words, vowel, lenwords
 from genre_by_pos import nouns, pronouns, adjectives, verbs, adverbs, mystem
@@ -64,10 +70,21 @@ for sent in corp3_sentences:
 
 corp1_data = np.array(corp1_data)
 corp2_data = np.array(corp2_data)
-data = np.vstack((corp1_data, corp2_data))
+corp3_data = np.array(corp3_data)
+data = np.vstack((corp1_data, corp2_data, corp3_data))
 p = mlab.PCA(data)
-print(p.Wt)
+print(p.mu, p.Wt)
+print('The most informational features:')
+max_useful = sorted([fabs(x) for x in p.Wt[:, 0]])[:4]
+for x in range(len(p.Wt[:, 0])):
+    if fabs(p.Wt[:, 0][x]) in max_useful:
+        print(features[x + 1], p.Wt[:, 0][x])
+feature_weights = [fabs(x) for x in p.Wt[:, 0]]
 N = len(corp1_data)
-plt.figure()
-plt.plot(p.Y[:N, 0], p.Y[:N, 1], 'ob', p.Y[N:, 0], p.Y[N:, 1], 'xr')
-plt.show()
+L = len(corp3_data)
+for feature1 in range(len(p.mu)):
+    for feature2 in range(len(p.mu)):
+        if feature1 != feature2:
+            plt.figure()
+            plt.plot(p.Y[:, feature1], p.Y[:, feature2], 'xr')
+            plt.savefig('feature%s_vs_feature%s.png' % (feature1 + 1, feature2 + 1), bbox_inches='tight')

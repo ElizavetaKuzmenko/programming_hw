@@ -68,12 +68,6 @@ if __name__ == '__main__':
         ana = [analysis for analysis in ana if 'analysis' in analysis.keys() and analysis['analysis'] != []]
         corp2_data.append([adjectives(ana), nouns(ana), verbs(ana), adverbs(ana), pronouns(ana)])
 
-    print('Checking', time.asctime())
-    for arr in corp1_data:
-        print(arr)
-    for arr in corp2_data:
-        print(arr)
-
     print('PCA and drawing', time.asctime())
     corp1_data = np.array(corp1_data)
     corp2_data = np.array(corp2_data)
@@ -84,3 +78,6 @@ if __name__ == '__main__':
     plt.figure()
     plt.plot(p.Y[:N, 0], p.Y[:N, 1], 'ob', p.Y[N:, 0], p.Y[N:, 1], 'xr')
     plt.show()
+# Вообще, я не поняла задание про пороговое значение, хоть и уточняла его у вас. Но мне кажется,
+# что такого значения не существует, потому что если взглянуть на график, то видно, что более 30% текстов
+# совпадает в пространстве по признакам, а значит 70% каждого текста с помощью порога мы не различим.
