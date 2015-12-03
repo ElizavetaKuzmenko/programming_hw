@@ -72,8 +72,13 @@ corp1_data = np.array(corp1_data)
 corp2_data = np.array(corp2_data)
 corp3_data = np.array(corp3_data)
 data = np.vstack((corp1_data, corp2_data, corp3_data))
+N = len(corp1_data)
+L = len(corp3_data)
 p = mlab.PCA(data)
 print(p.mu, p.Wt)
+plt.figure()
+plt.plot(p.Y[:N, 0], p.Y[:N, 1], 'xb', p.Y[N:L, 0], p.Y[N:L, 1], 'xr', p.Y[L:, 0], p.Y[L:, 1], 'xg')
+plt.savefig('SVD.png', bbox_inches='tight')
 print('The most informational features:')
 inf_features = []
 max_useful = sorted([fabs(x) for x in p.Wt[:, 0]])[:3]
@@ -83,7 +88,8 @@ for x in range(len(p.Wt[:, 0])):
         inf_features.append(x)
 for feature1 in inf_features:
     for feature2 in inf_features:
-        if feature1 != feature2:
+        if feature1 != feature2 and feature1 < feature2:
             plt.figure()
-            plt.plot(p.Y[:, feature1], p.Y[:, feature2], 'xr')
+            plt.plot(corp1_data[:, feature1], corp1_data[:, feature2], 'xr', corp2_data[:, feature1],
+                     corp2_data[:, feature2], 'xb', corp3_data[:, feature1], corp3_data[:, feature2], 'xg')
             plt.savefig('feature%s_vs_feature%s.png' % (feature1 + 1, feature2 + 1), bbox_inches='tight')
