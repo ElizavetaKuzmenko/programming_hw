@@ -75,16 +75,15 @@ data = np.vstack((corp1_data, corp2_data, corp3_data))
 p = mlab.PCA(data)
 print(p.mu, p.Wt)
 print('The most informational features:')
-max_useful = sorted([fabs(x) for x in p.Wt[:, 0]])[:4]
+inf_features = []
+max_useful = sorted([fabs(x) for x in p.Wt[:, 0]])[:3]
 for x in range(len(p.Wt[:, 0])):
     if fabs(p.Wt[:, 0][x]) in max_useful:
         print(features[x + 1], p.Wt[:, 0][x])
-feature_weights = [fabs(x) for x in p.Wt[:, 0]]
-N = len(corp1_data)
-L = len(corp3_data)
-for feature1 in range(len(p.mu)):
-    for feature2 in range(len(p.mu)):
+        inf_features.append(x)
+for feature1 in inf_features:
+    for feature2 in inf_features:
         if feature1 != feature2:
             plt.figure()
-            plt.plot(p.Y[:, feature1], p.Y[:, feature2], 'xr')
+            plt.plot(p.Y[feature1, :], p.Y[feature2, :], 'xr')
             plt.savefig('feature%s_vs_feature%s.png' % (feature1 + 1, feature2 + 1), bbox_inches='tight')
