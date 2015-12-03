@@ -85,5 +85,5 @@ for feature1 in inf_features:
     for feature2 in inf_features:
         if feature1 != feature2:
             plt.figure()
-            plt.plot(p.Y[feature1, :], p.Y[feature2, :], 'xr')
+            plt.plot(p.Y[:, feature1], p.Y[:, feature2], 'xr')
             plt.savefig('feature%s_vs_feature%s.png' % (feature1 + 1, feature2 + 1), bbox_inches='tight')
