@@ -1,28 +1,5 @@
 __author__ = 'lizaku55'
 
-import urllib.request as urlr
-import re
-import bz2
-import json
-import sqlite3
-from lxml import etree
-hparser = etree.HTMLParser(encoding='utf-8')
-
-codes = [line.strip() for line in open('codes.txt', encoding='utf8')]
-re_title = re.compile('<title>([^<]*)</title>')
-re_size = re.compile('Content-Length:.*')
-re_text = re.compile('<text[^>]*>([^<]*)</text>', flags=re.DOTALL)
-re_links = re.compile('\[\[[^\]]*\]\]')
-re_clean1 = re.compile('\{\{[^\}]*\}\}*')
-re_clean2 = re.compile('==[^=]*==')
-re_clean3 = re.compile('\{\|[^\}]*\|\}')
-re_clean4 = re.compile('&lt;[^&]*&gt;')
-re_clean5 = re.compile("\[\[[^\|=\]]*?[\|=][^\]]*?\]\]", flags=re.DOTALL)
-stop_symb = re.compile('[_\*\+$=&–}\]\[\.\?!:;"\(\),\{0-9]*')
-# wiki_url = 'https://dumps.wikimedia.org/backup-index.html'
-# page = urlr.urlopen(wiki_url)
-# text = page.read().decode('utf-8')
-
 # links = [re.findall('<a[^>]*>(.*)</a>', x, flags=re.DOTALL) for x in re.findall('<li>(.*?)</li>',
 # text, flags=re.DOTALL)]
 # codes = [x[0][:-4] for x in links if (x != [] and x[0].endswith('wiki'))]

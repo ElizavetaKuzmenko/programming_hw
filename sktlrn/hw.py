@@ -1,16 +1,16 @@
 # coding: utf-8
 __author__ = 'liza'
 
-# + 1. Возьмите два больших текста, например, "Война и Мир" и "Капиталл"
+# + 1. Возьмите два больших текста, например, "Война и Мир" и "Капитал"
 # + 2. Постройте для них морфологический анализ (например, с помощью mystem -d -n -i -s --format=json --eng-gr in.txt out.txt)
 # + 3. Прочитайте тексты по предложениям
 # + 4. В каждом предложении постройте число вхождений каждой части речи
 # + 5. Постройте таблицу, в которой для каждого предложения для каждой части речи указано количество находок этой части речи в этом предложении
 # + 6. Присоедините к таблице столбик с номером текста
-# 7. Отправьте данные на вход grid_search.GridSearchCV(svm.SVC(), {...})
+# + 7. Отправьте данные на вход grid_search.GridSearchCV(svm.SVC(), {...})
 # (вместо ... перечислите разные значения C)
-# 8. Покажите процент успеха (best_score_)
-# 9. Возьмите наилучший из получившихся классификаторов (best_estimator_), и с его помощью найдите 3 примера, где машина угадывает, и 3 примера, где машина ошибается
+# + 8. Покажите процент успеха (best_score_)
+# + 9. Возьмите наилучший из получившихся классификаторов (best_estimator_), и с его помощью найдите 3 примера, где машина угадывает, и 3 примера, где машина ошибается
 
 import re
 import numpy as np
@@ -83,9 +83,19 @@ if __name__ == '__main__':
     parameters = {'C': (.1, .5, 1.0, 1.5, 1.7, 2.0)}
     gs = grid_search.GridSearchCV(svm.LinearSVC(), parameters)
     gs.fit(data[:, 1:], data[:, 0])
-    print(gs.best_estimator_)
     print(gs.best_score_)
-    clf = svm.LinearSVC(C=1.7)
+    clf = svm.LinearSVC(C=gs.best_estimator_.C)
     clf.fit(data[::2, 1:], data[::2, 0])
+    right = 0
+    wrong = 0
     for obj in data[1::2, :]:
-        pass
+        print(obj)
+        label = clf.predict(obj[1:])
+        if label != obj[0] and wrong < 3:
+            print('Пример ошибки машины: class = ', obj[0], ', label = ', label, ', экземпляр ', obj[1:])
+            wrong += 1
+        elif label == obj[0] and right < 3:
+            print('Пример правильного ответа машины: class = ', obj[0], ', label = ', label, ', экземпляр ', obj[1:])
+            right += 1
+        elif right > 3 or wrong > 3:
+            break
