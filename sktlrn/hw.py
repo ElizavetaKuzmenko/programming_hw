@@ -53,6 +53,12 @@ def pronouns(analysis):
     except:
         return 0
 
+def prepositions(analysis):
+    try:
+        return len([w for w in analysis if 'PR=' in w['analysis'][0]['gr']])
+    except:
+        return 0
+
 if __name__ == '__main__':
     with open('capital.txt', 'r', encoding='utf-8') as f:
         corp1 = f.read()
@@ -68,12 +74,12 @@ if __name__ == '__main__':
     for sent in corp1_sentences:
         ana = mystem(sent)
         ana = [analysis for analysis in ana if 'analysis' in analysis.keys() and analysis['analysis'] != []]
-        corp1_data.append([1, adjectives(ana), nouns(ana), verbs(ana), adverbs(ana), pronouns(ana)])
+        corp1_data.append([1, adjectives(ana), nouns(ana), verbs(ana), adverbs(ana), pronouns(ana), prepositions(ana)])
     print('Processing corp2...')
     for sent in corp2_sentences:
         ana = mystem(sent)
         ana = [analysis for analysis in ana if 'analysis' in analysis.keys() and analysis['analysis'] != []]
-        corp2_data.append([2, adjectives(ana), nouns(ana), verbs(ana), adverbs(ana), pronouns(ana)])
+        corp2_data.append([2, adjectives(ana), nouns(ana), verbs(ana), adverbs(ana), pronouns(ana), prepositions(ana)])
 
     corp1_data = np.array(corp1_data)
     corp2_data = np.array(corp2_data)
@@ -83,7 +89,7 @@ if __name__ == '__main__':
     parameters = {'C': (.1, .5, 1.0, 1.5, 1.7, 2.0)}
     gs = grid_search.GridSearchCV(svm.LinearSVC(), parameters)
     gs.fit(data[:, 1:], data[:, 0])
-    print(gs.best_score_)
+    print('Best result is ',gs.best_score_)
     clf = svm.LinearSVC(C=gs.best_estimator_.C)
     clf.fit(data[::2, 1:], data[::2, 0])
     right = 0
@@ -97,5 +103,5 @@ if __name__ == '__main__':
         elif label == obj[0] and right < 3:
             print('Пример правильного ответа машины: class = ', obj[0], ', label = ', label, ', экземпляр ', obj[1:])
             right += 1
-        elif right > 3 or wrong > 3:
+        elif right > 3 and wrong > 3:
             break
