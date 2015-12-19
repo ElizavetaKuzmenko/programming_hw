@@ -29,9 +29,12 @@ m = Mystem()
 
 path_corp1 = './anekdots'
 path_corp2 = './izvest'
+path_test = './test_corpus'
+
 
 def mystem(text):
     return m.analyze(text)
+
 
 def nouns(analysis):
     try:
@@ -39,11 +42,13 @@ def nouns(analysis):
     except:
         return 0
 
+
 def adjectives(analysis):
     try:
         return len([w for w in analysis if 'A=' in w['analysis'][0]['gr']])
     except:
         return 0
+
 
 def verbs(analysis):
     try:
@@ -51,11 +56,13 @@ def verbs(analysis):
     except:
         return 0
 
+
 def adverbs(analysis):
     try:
         return len([w for w in analysis if 'ADV=' in w['analysis'][0]['gr']])
     except:
         return 0
+
 
 def pronouns(analysis):
     try:
@@ -63,11 +70,13 @@ def pronouns(analysis):
     except:
         return 0
 
+
 def prepositions(analysis):
     try:
         return len([w for w in analysis if 'PR=' in w['analysis'][0]['gr']])
     except:
         return 0
+
 
 def make_pos_table(corp):
     corp_data = []
@@ -77,12 +86,14 @@ def make_pos_table(corp):
         corp_data.append([adjectives(ana), nouns(ana), verbs(ana), adverbs(ana), pronouns(ana), prepositions(ana)])
     return corp_data
 
+
 def make_tfidf_table(corp):
     count_vect = CountVectorizer()
     tfidf_transformer = TfidfTransformer()
     X_train_counts = count_vect.fit_transform(corp)
     X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
     return X_train_tfidf
+
 
 def make_lists(corp_path):
     corp_files = os.listdir(corp_path)
@@ -93,6 +104,7 @@ def make_lists(corp_path):
             corp.append(text)
     return corp
 
+
 def classify(data, Y):
     parameters1 = {'C': (.1, .5, 1.0, 1.5, 1.7, 2.0)}
     gs1 = grid_search.GridSearchCV(svm.LinearSVC(), parameters1)
@@ -102,22 +114,25 @@ def classify(data, Y):
     gs2.fit(data, Y)
     return gs1, gs2
 
-#def find_mistakes(gs, data, Y):
-#    clf = gs.best_estimator_
-#    clf.fit(data[::2, :], Y[::2])
-#    data = scipy.sparse.hstack((Y, data))
-#    right = 0
-#    wrong = 0
-#    for obj in data[1::2, :]:
-#        label = clf.predict(obj[1:])
-#        if label != obj[0] and wrong < 3:
-#            print('Пример ошибки машины: class = ', obj[0], ', label = ', label, ', экземпляр ', obj[1])
-#            wrong += 1
-#        elif label == Y[obj] and right < 3:
-#            print('Пример правильного ответа машины: class = ', obj[0], ', label = ', label, ', экземпляр ', obj[1])
-#            right += 1
-#        elif right > 3 and wrong > 3:
-#            break
+
+def find_mistakes(gs, data, Y):
+    data = data.toarray()
+    clf = gs.best_estimator_
+    right = 0
+    wrong = 0
+    i = 1
+    for obj in data[data:, :]:
+        label = clf.predict(obj)
+        if label != Y[i] and wrong < 3:
+            print('Пример ошибки машины: class = ', Y[i], ', label = ', label)
+            wrong += 1
+        elif label == Y[[i]] and right < 3:
+            print('Пример правильного ответа машины: class = ', Y[i], ', label = ', label)
+            right += 1
+        elif right > 3 and wrong > 3:
+            break
+        i += 2
+
 
 
 if __name__ == '__main__':
@@ -133,10 +148,10 @@ if __name__ == '__main__':
     svm, nb = classify(data, Y)
     print('Best result for SVM is ', svm.best_score_)
     print('Best result for NB is ', svm.best_score_)
-    #print('Ошибки в SVM:')
-    #find_mistakes(svm, data, Y)
-    #print('Ошибки в NB:')
-    #find_mistakes(nb, data, Y)
+    print('Ошибки в SVM:')
+    find_mistakes(svm, data, Y)
+    print('Ошибки в NB:')
+    find_mistakes(nb, data, Y)
 
 
 
